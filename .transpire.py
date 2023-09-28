@@ -1,9 +1,13 @@
 from transpire.resources import Deployment, Ingress, Secret, Service
+from transpire.types import Image
+from transpire.utils import get_image_tag
 
 name = "strapi"
-image = "foo.bar/strapi"
 db_host = f"ocf-{name}"
 
+
+def images():
+    yield Image(name="strapi-production", path=Path("/"), target="strapi-production")
 
 def objects():
     # Postgres database for strapi
@@ -34,7 +38,7 @@ def objects():
     )
     yield secret.build()
     
-    dep = Deployment.simple(name=name, image=image, ports=[1337])
+    dep = Deployment.simple(name=name, image=get_image_tag("strapi-production"), ports=[1337])
 
     # https://docs.strapi.io/dev-docs/installation/docker
     env = {
