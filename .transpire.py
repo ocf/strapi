@@ -49,8 +49,6 @@ def objects():
         "NODE_ENV": "production",
     }
 
-    yield dep.build()
-
     dep.obj.spec.template.spec.containers[0].env = [
         {
             "name": "DATABASE_USERNAME",
@@ -98,6 +96,10 @@ def objects():
             },
         },
         *[{"name": k, "value": v} for k, v in env.items()],
+    ]
+
+    dep.obj.spec.template.spec.containers[0].volume_mounts = [
+        {"name": "uploads", "mountPath": "/opt/app/public/uploads"}
     ]
 
     yield dep.build()

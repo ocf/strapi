@@ -1,29 +1,21 @@
 # Creating multi-stage build for production
-FROM node:18-alpine as build
-RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev vips-dev > /dev/null 2>&1
+FROM node:18-alpine as strapi-production
+RUN apk update && apk add --no-cache curl build-base gcc autoconf automake zlib-dev libpng-dev vips-dev > /dev/null 2>&1
+
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
+ARG STRAPI_VERSION=v4.13.7
+ENV STRAPI_VERSION=${STRAPI_VERSION}
 
-WORKDIR /opt/
-COPY package.json yarn.lock ./
-RUN yarn config set network-timeout 600000 -g && yarn install --production
-ENV PATH /opt/node_modules/.bin:$PATH
 WORKDIR /opt/app
-COPY . .
+
+RUN wget https://github.com/strapi/strapi/archive/refs/tags/${STRAPI_VERSION}.tar.gz \
+  && tar -xzf ${STRAPI_VERSION}.tar.gz --strip-components=1 \
+  && rm -f ${STRAPI_VERSION}.tar.gz \
+  && yarn install
 RUN yarn build
-
-# Creating final production image
-FROM node:18-alpine as strapi-producton
-RUN apk add --no-cache vips-dev
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-WORKDIR /opt/
-COPY --from=build /opt/node_modules ./node_modules
-WORKDIR /opt/app
-COPY --from=build /opt/app ./
-ENV PATH /opt/node_modules/.bin:$PATH
 
 RUN chown -R node:node /opt/app
 USER node
 EXPOSE 1337
-CMD ["yarn", "start"]
+CMD ["yarn, "start"]
